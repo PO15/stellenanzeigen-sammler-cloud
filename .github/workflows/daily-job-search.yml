@@ -190,7 +190,7 @@ jobs:
                   "nextStep": "Anzeige pruefen",
                   "notes": f"Cloud-Vorschlag: passend zu den Zielrollen; Norddeutschland inklusive Niedersachsen und Ostwestfalen sowie Unternehmen mit wahrscheinlich >500 Mitarbeitenden werden priorisiert. {size_note}"
               })
-              if len(suggestions) == 3:
+              if len(suggestions) == 5:
                   break
 
           Path("stellen-vorschlaege.json").write_text(json.dumps(suggestions, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
