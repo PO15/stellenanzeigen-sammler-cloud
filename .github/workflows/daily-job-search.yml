@@ -29,7 +29,13 @@ jobs:
           listings = payload.get("data", [])
 
           role_words = ["systemingenieur", "systems engineer", "testingenieur", "test engineer", "entwicklungsingenieur", "development engineer", "projektingenieur", "projektmanager", "project manager", "autonom", "adas", "machine learning", "data scientist", "elektrotechnik", "elektrische systeme", "aerospace", "luftfahrt"]
-          north_words = ["hamburg", "bremen", "hannover", "braunschweig", "kiel", "rostock", "lübeck", "oldenburg", "wolfsburg"]
+          north_words = [
+              "hamburg", "bremen", "hannover", "braunschweig", "kiel", "rostock", "lübeck", "oldenburg", "wolfsburg",
+              "niedersachsen", "osnabrück", "osnabrueck", "göttingen", "goettingen", "hildesheim", "salzgitter", "celle", "lüneburg", "lueneburg",
+              "emden", "wilhelmshaven", "aurich", "leer", "papenburg", "meppen", "cloppenburg", "vechta", "verden", "nienburg", "hameln",
+              "ostwestfalen", "owl", "bielefeld", "paderborn", "minden", "gütersloh", "guetersloh", "herford", "detmold", "lemgo", "bad oeynhausen",
+              "löhne", "loehne", "porta westfalica", "rheda-wiedenbrück", "rheda-wiedenbrueck", "verl", "halle westfalen", "höxter", "hoexter"
+          ]
           large_companies = [
               "airbus", "lufthansa", "siemens", "bosch", "continental", "volkswagen", "vw", "mercedes", "bmw", "porsche", "audi", "deutsche bahn", "db ",
               "rheinmetall", "thyssenkrupp", "nordex", "enercon", "honeywell", "rolls-royce", "ibm", "dhl", "deutsche post", "sap", "bayer",
@@ -105,7 +111,7 @@ jobs:
                   "status": "Interessant",
                   "foundAt": date.today().isoformat(),
                   "nextStep": "Anzeige pruefen",
-                  "notes": f"Cloud-Vorschlag: passend zu den Zielrollen; Norddeutschland und Unternehmen mit wahrscheinlich >500 Mitarbeitenden werden priorisiert. {size_note}"
+                  "notes": f"Cloud-Vorschlag: passend zu den Zielrollen; Norddeutschland inklusive Niedersachsen und Ostwestfalen sowie Unternehmen mit wahrscheinlich >500 Mitarbeitenden werden priorisiert. {size_note}"
               })
               if len(suggestions) == 3:
                   break
