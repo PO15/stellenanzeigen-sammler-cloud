@@ -26,16 +26,19 @@ jobs:
 
           with urllib.request.urlopen("https://www.arbeitnow.com/api/job-board-api", timeout=30) as response:
               payload = json.load(response)
+
           listings = payload.get("data", [])
 
           role_words = ["systemingenieur", "systems engineer", "testingenieur", "test engineer", "entwicklungsingenieur", "development engineer", "projektingenieur", "projektmanager", "project manager", "autonom", "adas", "machine learning", "data scientist", "elektrotechnik", "elektrische systeme", "aerospace", "luftfahrt"]
           north_words = ["hamburg", "bremen", "hannover", "braunschweig", "kiel", "rostock", "lübeck", "oldenburg", "wolfsburg"]
           large_companies = ["airbus", "lufthansa", "siemens", "bosch", "continental", "volkswagen", "mercedes", "deutsche bahn", "rheinmetall", "thyssenkrupp", "nordex", "enercon", "honeywell", "rolls-royce", "ibm", "dhl"]
+          exclude_words = ["working student", "werkstudent", "internship", "praktikum", "trainee", "ausbildung", "student assistant", "abschlussarbeit"]
 
           def clean_html(value):
               return re.sub(r"<[^>]+>", " ", value or "")
 
           candidates = []
+
           for job in listings:
               title = job.get("title", "").strip()
               company = job.get("company_name", "").strip()
@@ -43,9 +46,14 @@ jobs:
               link = job.get("url", "").strip()
               description = clean_html(job.get("description", ""))
               haystack = f"{title} {company} {location} {description}".lower()
+
+              if any(word in haystack for word in exclude_words):
+                  continue
+
               role_hits = sum(word in haystack for word in role_words)
               if not role_hits or not link:
                   continue
+
               score = role_hits * 4
               if any(word in haystack for word in north_words):
                   score += 8
@@ -53,21 +61,35 @@ jobs:
                   score += 5
               if "germany" in haystack or any(word in haystack for word in north_words):
                   score += 2
+
               candidates.append((score, title, company, location, link))
 
           candidates.sort(key=lambda item: item[0], reverse=True)
+
           suggestions = []
           seen = set()
+
           for score, title, company, location, link in candidates:
               if link.lower() in seen:
                   continue
               seen.add(link.lower())
               slug = re.sub(r"[^a-z0-9]+", "-", f"{company}-{title}".lower()).strip("-")[:80]
-              suggestions.append({"id": f"cloud-{slug}", "title": title, "company": company, "location": location or "Deutschland", "url": link, "priority": "Hoch" if score >= 14 else "Mittel", "status": "Interessant", "foundAt": date.today().isoformat(), "nextStep": "Anzeige pruefen", "notes": "Cloud-Vorschlag: passend zu den Zielrollen; Norddeutschland und etablierte Unternehmen werden priorisiert."})
+              suggestions.append({
+                  "id": f"cloud-{slug}",
+                  "title": title,
+                  "company": company,
+                  "location": location or "Deutschland",
+                  "url": link,
+                  "priority": "Hoch" if score >= 14 else "Mittel",
+                  "status": "Interessant",
+                  "foundAt": date.today().isoformat(),
+                  "nextStep": "Anzeige pruefen",
+                  "notes": "Cloud-Vorschlag: passend zu den Zielrollen; Norddeutschland und etablierte Unternehmen werden priorisiert."
+              })
               if len(suggestions) == 3:
                   break
 
-          Path("stellen-vorschlaege.json").write_text(json.dumps(suggestions, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")
+          Path("stellen-vorschlaege.json").write_text(json.dumps(suggestions, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
           PY
 
       - name: Vorschlaege speichern
