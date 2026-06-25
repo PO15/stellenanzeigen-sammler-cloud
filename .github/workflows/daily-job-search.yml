@@ -30,7 +30,18 @@ jobs:
 
           role_words = ["systemingenieur", "systems engineer", "testingenieur", "test engineer", "entwicklungsingenieur", "development engineer", "projektingenieur", "projektmanager", "project manager", "autonom", "adas", "machine learning", "data scientist", "elektrotechnik", "elektrische systeme", "aerospace", "luftfahrt"]
           north_words = ["hamburg", "bremen", "hannover", "braunschweig", "kiel", "rostock", "lübeck", "oldenburg", "wolfsburg"]
-          large_companies = ["airbus", "lufthansa", "siemens", "bosch", "continental", "volkswagen", "mercedes", "deutsche bahn", "rheinmetall", "thyssenkrupp", "nordex", "enercon", "honeywell", "rolls-royce", "ibm", "dhl"]
+          large_companies = [
+              "airbus", "lufthansa", "siemens", "bosch", "continental", "volkswagen", "vw", "mercedes", "bmw", "porsche", "audi", "deutsche bahn", "db ",
+              "rheinmetall", "thyssenkrupp", "nordex", "enercon", "honeywell", "rolls-royce", "ibm", "dhl", "deutsche post", "sap", "bayer",
+              "basf", "zeiss", "carl zeiss", "sartorius", "philips", "tesla", "tesa", "beiersdorf", "otto", "tchibo", "jungheinrich", "hella",
+              "zf", "dräger", "draeger", "still", "kion", "lenze", "claas", "liebherr", "mtu", "knorr-bremse", "hapag-lloyd", "kühne", "kuehne",
+              "festo", "abb", "schneider electric", "general electric", "ge aviation", "safran", "collins aerospace", "boeing", "tesat", "hensoldt", "ohb",
+              "dlr", "esa", "fraunhofer", "helmholtz", "max planck"
+          ]
+          large_company_indicators = [
+              "konzern", "unternehmensgruppe", "group", "global", "weltweit", "international", "standorte", "locations",
+              "mitarbeiter", "employees", "mehr als 500", "über 500", "ueber 500", ">500", "500+", "1.000", "1000", "10.000", "10000"
+          ]
           exclude_words = ["working student", "werkstudent", "internship", "praktikum", "trainee", "ausbildung", "student assistant", "abschlussarbeit"]
 
           def clean_html(value):
@@ -53,37 +64,48 @@ jobs:
               if not role_hits or not link:
                   continue
 
+              is_north = any(word in haystack for word in north_words)
+              has_large_company_signal = any(word in haystack for word in large_companies) or any(word in haystack for word in large_company_indicators)
+
+              # Die Quelle liefert keine Mitarbeiterzahl. Darum werden kleine/unbekannte Firmen nur noch zugelassen,
+              # wenn Rolle und Norddeutschland sehr gut passen.
+              if not has_large_company_signal and not (is_north and role_hits >= 3):
+                  continue
+
               score = role_hits * 4
-              if any(word in haystack for word in north_words):
+              if is_north:
                   score += 8
-              if any(word in haystack for word in large_companies):
-                  score += 5
-              if "germany" in haystack or any(word in haystack for word in north_words):
+              if has_large_company_signal:
+                  score += 12
+              else:
+                  score -= 6
+              if "germany" in haystack or is_north:
                   score += 2
 
-              candidates.append((score, title, company, location, link))
+              candidates.append((score, title, company, location, link, has_large_company_signal))
 
           candidates.sort(key=lambda item: item[0], reverse=True)
 
           suggestions = []
           seen = set()
 
-          for score, title, company, location, link in candidates:
+          for score, title, company, location, link, has_large_company_signal in candidates:
               if link.lower() in seen:
                   continue
               seen.add(link.lower())
               slug = re.sub(r"[^a-z0-9]+", "-", f"{company}-{title}".lower()).strip("-")[:80]
+              size_note = "Grossunternehmen bzw. >500-Mitarbeiter-Signal erkannt." if has_large_company_signal else "Kein sicheres Groessen-Signal, aber fachlich und regional sehr passend."
               suggestions.append({
                   "id": f"cloud-{slug}",
                   "title": title,
                   "company": company,
                   "location": location or "Deutschland",
                   "url": link,
-                  "priority": "Hoch" if score >= 14 else "Mittel",
+                  "priority": "Hoch" if score >= 20 else "Mittel",
                   "status": "Interessant",
                   "foundAt": date.today().isoformat(),
                   "nextStep": "Anzeige pruefen",
-                  "notes": "Cloud-Vorschlag: passend zu den Zielrollen; Norddeutschland und etablierte Unternehmen werden priorisiert."
+                  "notes": f"Cloud-Vorschlag: passend zu den Zielrollen; Norddeutschland und Unternehmen mit wahrscheinlich >500 Mitarbeitenden werden priorisiert. {size_note}"
               })
               if len(suggestions) == 3:
                   break
