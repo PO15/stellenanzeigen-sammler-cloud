@@ -25,7 +25,7 @@ jobs:
           from pathlib import Path
 
           USER_AGENT = "stellenanzeigen-sammler-cloud/1.0 (GitHub Actions)"
-          MIN_VERIFIED_EMPLOYEES = 10000
+          MIN_VERIFIED_EMPLOYEES = 1000
 
           def get_json(url, timeout=20):
               request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
@@ -173,7 +173,7 @@ jobs:
               elif is_trusted_company:
                   size_note = "Etablierter Arbeitgeber aus Kuratliste; keine sichere Wikidata-Mitarbeiterzahl gefunden."
               else:
-                  size_note = f"Wikidata bestaetigt ein sehr grosses Unternehmen mit ca. {employee_count} Mitarbeitenden."
+                  size_note = f"Wikidata bestaetigt ein Unternehmen mit mindestens 1000 Mitarbeitenden mit ca. {employee_count} Mitarbeitenden."
               suggestions.append({
                   "id": f"cloud-{slug}",
                   "title": title,
