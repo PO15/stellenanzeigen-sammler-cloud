@@ -25,6 +25,7 @@ jobs:
           from pathlib import Path
 
           USER_AGENT = "stellenanzeigen-sammler-cloud/1.0 (GitHub Actions)"
+          MIN_VERIFIED_EMPLOYEES = 10000
 
           def get_json(url, timeout=20):
               request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
@@ -42,17 +43,13 @@ jobs:
               "ostwestfalen", "owl", "bielefeld", "paderborn", "minden", "gütersloh", "guetersloh", "herford", "detmold", "lemgo", "bad oeynhausen",
               "löhne", "loehne", "porta westfalica", "rheda-wiedenbrück", "rheda-wiedenbrueck", "verl", "halle westfalen", "höxter", "hoexter"
           ]
-          large_companies = [
-              "airbus", "lufthansa", "siemens", "bosch", "continental", "volkswagen", "vw", "mercedes", "bmw", "porsche", "audi", "deutsche bahn", "db ",
-              "rheinmetall", "thyssenkrupp", "nordex", "enercon", "honeywell", "rolls-royce", "ibm", "dhl", "deutsche post", "sap", "bayer",
-              "basf", "zeiss", "carl zeiss", "sartorius", "philips", "tesla", "tesa", "beiersdorf", "otto", "tchibo", "jungheinrich", "hella",
-              "zf", "dräger", "draeger", "still", "kion", "lenze", "claas", "liebherr", "mtu", "knorr-bremse", "hapag-lloyd", "kühne", "kuehne",
-              "festo", "abb", "schneider electric", "general electric", "ge aviation", "safran", "collins aerospace", "boeing", "tesat", "hensoldt", "ohb",
-              "dlr", "esa", "fraunhofer", "helmholtz", "max planck"
-          ]
-          large_company_indicators = [
-              "konzern", "unternehmensgruppe", "group", "global", "weltweit", "international", "standorte", "locations",
-              "mitarbeiter", "employees", "mehr als 500", "über 500", "ueber 500", ">500", "500+", "1.000", "1000", "10.000", "10000"
+          trusted_large_companies = [
+              "airbus", "airbus defence", "airbus helicopters", "arianegroup", "boeing", "collins aerospace", "dlr", "esa", "fraunhofer", "ge aviation", "ge vernova", "honeywell", "mtu", "ohb", "rolls-royce", "safran", "tesat",
+              "bmw", "audi", "bosch", "bosch rexroth", "continental", "daimler", "forvia", "hella", "mercedes", "mercedes-benz", "porsche", "rheinmetall", "schaeffler", "thyssenkrupp", "volkswagen", "vw", "zf",
+              "abb", "basf", "bayer", "b braun", "b. braun", "beiersdorf", "carl zeiss", "dmg mori", "dräger", "draeger", "e.on", "enercon", "evonik", "festo", "hensoldt", "knorr-bremse", "krones", "liebherr", "nordex", "philips", "phoenix contact", "rwe", "sartorius", "schneider electric", "siemens", "siemens energy", "siemens gamesa", "tesa", "vestas", "wago", "zeiss",
+              "beckhoff", "bertelsmann", "claas", "dspace", "dr. oetker", "harting", "kion", "lenze", "miele", "melitta", "phoenix contact", "schüco", "schueco", "sennheiser", "still", "wago",
+              "deutsche bahn", "db", "deutsche post", "dhl", "hapag-lloyd", "jungheinrich", "kühne", "kuehne", "kühne+nagel", "kuehne+nagel", "kuehne nagel", "körber", "koerber", "lufthansa", "lufthansa technik", "otto", "otto group", "tchibo",
+              "accenture", "adesso", "amazon", "aws", "capgemini", "google", "ibm", "microsoft", "nvidia", "sap", "t-systems", "telekom"
           ]
           exclude_words = ["working student", "werkstudent", "internship", "praktikum", "trainee", "ausbildung", "student assistant", "abschlussarbeit"]
           employee_cache = {}
@@ -62,9 +59,16 @@ jobs:
 
           def normalize_company_name(value):
               value = (value or "").strip()
-              value = re.sub(r"\b(gmbh|ag|se|kg|kgaa|inc|ltd|limited|llc|corp|corporation|group|holding|co\.?|company)\b", " ", value, flags=re.IGNORECASE)
-              value = re.sub(r"[^A-Za-zÀ-ž0-9 &+-]+", " ", value)
+              value = re.sub(r"\b(gmbh|ag|se|kg|kgaa|inc|ltd|limited|llc|corp|corporation|holding|co\.?|company)\b", " ", value, flags=re.IGNORECASE)
+              value = re.sub(r"[^A-Za-zÀ-ž0-9 &+.-]+", " ", value)
               return re.sub(r"\s+", " ", value).strip()
+
+          def contains_term(text, term):
+              pattern = r"(?<![a-z0-9])" + re.escape(term.lower()) + r"(?![a-z0-9])"
+              return re.search(pattern, text.lower()) is not None
+
+          def matches_any(text, terms):
+              return any(contains_term(text, term) for term in terms)
 
           def employee_count_from_wikidata(company):
               query = normalize_company_name(company)
@@ -76,28 +80,22 @@ jobs:
 
               employee_cache[key] = None
               try:
-                  search_params = urllib.parse.urlencode({
-                      "action": "wbsearchentities",
-                      "search": query,
-                      "language": "en",
-                      "format": "json",
-                      "limit": "3"
-                  })
-                  search = get_json(f"https://www.wikidata.org/w/api.php?{search_params}", timeout=12)
-                  ids = [item.get("id") for item in search.get("search", []) if item.get("id")]
-                  if not ids:
+                  ids = []
+                  for language in ("en", "de"):
                       search_params = urllib.parse.urlencode({
                           "action": "wbsearchentities",
                           "search": query,
-                          "language": "de",
+                          "language": language,
                           "format": "json",
                           "limit": "3"
                       })
                       search = get_json(f"https://www.wikidata.org/w/api.php?{search_params}", timeout=12)
-                      ids = [item.get("id") for item in search.get("search", []) if item.get("id")]
+                      ids.extend(item.get("id") for item in search.get("search", []) if item.get("id"))
+                      if ids:
+                          break
 
                   max_employees = None
-                  for entity_id in ids:
+                  for entity_id in dict.fromkeys(ids):
                       entity_params = urllib.parse.urlencode({
                           "action": "wbgetentities",
                           "ids": entity_id,
@@ -130,6 +128,7 @@ jobs:
               link = job.get("url", "").strip()
               description = clean_html(job.get("description", ""))
               haystack = f"{title} {company} {location} {description}".lower()
+              company_text = f"{company} {normalize_company_name(company)}".lower()
 
               if any(word in haystack for word in exclude_words):
                   continue
@@ -140,55 +139,52 @@ jobs:
 
               is_north = any(word in haystack for word in north_words)
               employee_count = employee_count_from_wikidata(company)
-              has_verified_large_company = employee_count is not None and employee_count >= 500
-              has_large_company_signal = has_verified_large_company or any(word in haystack for word in large_companies) or any(word in haystack for word in large_company_indicators)
+              is_trusted_company = matches_any(company_text, trusted_large_companies)
+              is_verified_large_company = employee_count is not None and employee_count >= MIN_VERIFIED_EMPLOYEES
 
-              # Wikidata liefert nicht fuer jede Firma eine Mitarbeiterzahl. Kleine/unbekannte Firmen werden nur noch zugelassen,
-              # wenn Rolle und Norddeutschland sehr gut passen.
-              if not has_large_company_signal and not (is_north and role_hits >= 3):
+              # Strenger Filter: unbekannte Firmen kommen nicht mehr durch, auch wenn die Rolle gut klingt.
+              if not (is_trusted_company or is_verified_large_company):
                   continue
 
               score = role_hits * 4
               if is_north:
-                  score += 8
-              if has_verified_large_company:
-                  score += 16
-              elif has_large_company_signal:
                   score += 10
-              else:
-                  score -= 6
+              if is_trusted_company:
+                  score += 18
+              if is_verified_large_company:
+                  score += 14
               if "germany" in haystack or is_north:
                   score += 2
 
-              candidates.append((score, title, company, location, link, has_verified_large_company, employee_count, has_large_company_signal))
+              candidates.append((score, title, company, location, link, is_trusted_company, employee_count, is_verified_large_company))
 
           candidates.sort(key=lambda item: item[0], reverse=True)
 
           suggestions = []
           seen = set()
 
-          for score, title, company, location, link, has_verified_large_company, employee_count, has_large_company_signal in candidates:
+          for score, title, company, location, link, is_trusted_company, employee_count, is_verified_large_company in candidates:
               if link.lower() in seen:
                   continue
               seen.add(link.lower())
               slug = re.sub(r"[^a-z0-9]+", "-", f"{company}-{title}".lower()).strip("-")[:80]
-              if has_verified_large_company:
-                  size_note = f"Wikidata-Mitarbeiterzahl gefunden: ca. {employee_count} Mitarbeitende."
-              elif has_large_company_signal:
-                  size_note = "Grossunternehmen-Signal erkannt, aber keine sichere Mitarbeiterzahl gefunden."
+              if is_trusted_company and is_verified_large_company:
+                  size_note = f"Etablierter Arbeitgeber aus Kuratliste; Wikidata nennt ca. {employee_count} Mitarbeitende."
+              elif is_trusted_company:
+                  size_note = "Etablierter Arbeitgeber aus Kuratliste; keine sichere Wikidata-Mitarbeiterzahl gefunden."
               else:
-                  size_note = "Kein sicheres Groessen-Signal, aber fachlich und regional sehr passend."
+                  size_note = f"Wikidata bestaetigt ein sehr grosses Unternehmen mit ca. {employee_count} Mitarbeitenden."
               suggestions.append({
                   "id": f"cloud-{slug}",
                   "title": title,
                   "company": company,
                   "location": location or "Deutschland",
                   "url": link,
-                  "priority": "Hoch" if score >= 22 else "Mittel",
+                  "priority": "Hoch" if score >= 34 else "Mittel",
                   "status": "Interessant",
                   "foundAt": date.today().isoformat(),
                   "nextStep": "Anzeige pruefen",
-                  "notes": f"Cloud-Vorschlag: passend zu den Zielrollen; Norddeutschland inklusive Niedersachsen und Ostwestfalen sowie Unternehmen mit wahrscheinlich >500 Mitarbeitenden werden priorisiert. {size_note}"
+                  "notes": f"Cloud-Vorschlag: nur etablierte grosse Arbeitgeber; Norddeutschland inklusive Niedersachsen und Ostwestfalen wird priorisiert. {size_note}"
               })
               if len(suggestions) == 5:
                   break
