@@ -1,1 +1,26 @@
-[]
+[
+  {
+    "id": "cloud-jetbrains-senior-product-manager-bad-product",
+    "title": "Senior Product Manager (BAD Product)",
+    "company": "jetbrains",
+    "location": "Berlin; Munich",
+    "url": "https://www.arbeitnow.com/jobs/companies/jetbrains/senior-product-manager-bad-product-berlin-munich-114399",
+    "priority": "Mittel",
+    "status": "Interessant",
+    "foundAt": "2026-08-13",
+    "nextStep": "Anzeige pruefen",
+    "notes": "Cloud-Vorschlag: nur etablierte grosse Arbeitgeber; Norddeutschland inklusive Niedersachsen und Ostwestfalen wird priorisiert. Wikidata bestaetigt ein Unternehmen mit mindestens 1000 Mitarbeitenden mit ca. 2800 Mitarbeitenden."
+  },
+  {
+    "id": "cloud-jetbrains-project-manager-software-engineering-research",
+    "title": "Project Manager (Software Engineering Research)",
+    "company": "jetbrains",
+    "location": "Berlin; Munich",
+    "url": "https://www.arbeitnow.com/jobs/companies/jetbrains/project-manager-software-engineering-research-berlin-munich-359893",
+    "priority": "Mittel",
+    "status": "Interessant",
+    "foundAt": "2026-08-13",
+    "nextStep": "Anzeige pruefen",
+    "notes": "Cloud-Vorschlag: nur etablierte grosse Arbeitgeber; Norddeutschland inklusive Niedersachsen und Ostwestfalen wird priorisiert. Wikidata bestaetigt ein Unternehmen mit mindestens 1000 Mitarbeitenden mit ca. 2800 Mitarbeitenden."
+  }
+]
