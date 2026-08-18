@@ -1,1 +1,26 @@
-[]
+[
+  {
+    "id": "cloud-anthropic-forward-deployed-engineer",
+    "title": "Forward Deployed Engineer",
+    "company": "anthropic",
+    "location": "Munich",
+    "url": "https://www.arbeitnow.com/jobs/companies/anthropic/forward-deployed-engineer-munich-370247",
+    "priority": "Mittel",
+    "status": "Interessant",
+    "foundAt": "2026-08-18",
+    "nextStep": "Anzeige pruefen",
+    "notes": "Cloud-Vorschlag: nur etablierte grosse Arbeitgeber; Norddeutschland inklusive Niedersachsen und Ostwestfalen wird priorisiert. Wikidata bestaetigt ein Unternehmen mit mindestens 1000 Mitarbeitenden mit ca. 2500 Mitarbeitenden."
+  },
+  {
+    "id": "cloud-anthropic-applied-ai-architect-industries",
+    "title": "Applied AI Architect, Industries",
+    "company": "anthropic",
+    "location": "Munich",
+    "url": "https://www.arbeitnow.com/jobs/companies/anthropic/applied-ai-architect-industries-munich-132783",
+    "priority": "Mittel",
+    "status": "Interessant",
+    "foundAt": "2026-08-18",
+    "nextStep": "Anzeige pruefen",
+    "notes": "Cloud-Vorschlag: nur etablierte grosse Arbeitgeber; Norddeutschland inklusive Niedersachsen und Ostwestfalen wird priorisiert. Wikidata bestaetigt ein Unternehmen mit mindestens 1000 Mitarbeitenden mit ca. 2500 Mitarbeitenden."
+  }
+]
